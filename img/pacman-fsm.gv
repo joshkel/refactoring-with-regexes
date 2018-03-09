@@ -1,0 +1,19 @@
+digraph finite_state_machine {
+	rankdir=LR;
+    overlap=scale;
+	node [ shape = circle, width = 4, fontsize = 48 ];
+    edge [ fontsize = 48, arrowsize = 3 ];
+
+    "Wander the maze" [ pos="0,0" ]
+    "Chase Pac-Man" [ pos="10,0" ]
+    "Flee" [ pos="10,10" ]
+    "Return to base" [ pos="0,10" ]
+
+	"Wander the maze" -> "Chase Pac-Man" [ label = "sight Pac-Man" ];
+    "Return to base" -> "Wander the maze" [ label = "reached base" ];
+	"Chase Pac-Man" -> "Wander the maze" [ label = "lose sight of Pac-Man" ];
+    "Wander the maze" -> "Flee" [ label = "power pellet" ];
+    "Chase Pac-Man" -> "Flee" [ label = "power pellet" ];
+    "Flee" -> "Wander the maze" [ label = "power pellet wears off" ];
+    "Flee" -> "Return to base" [ label = "eaten by Pac-Man" ];
+}

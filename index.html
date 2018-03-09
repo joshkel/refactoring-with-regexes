@@ -1,0 +1,690 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Refactoring with Regexes</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/sky.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+
+        <style>
+            .reveal section img.float-left {
+                float: left;
+                margin-right: 40px;
+            }
+
+            dl.horizontal > dt {
+                float: left;
+            }
+
+            dl.horizontal > dd {
+                margin-left: 120px;
+            }
+            dl.horizontal.wide > dd {
+                margin-left: 160px;
+            }
+
+            .fragment-holder {
+                position: relative;
+            }
+            .fragment-holder > * {
+                position: absolute !important;
+            }
+
+            .fragment-holder[data-code-stepper] .fragment {
+                /* Disable transitions */
+                transition: none !important;
+            }
+
+            .fragment-holder dl {
+                /* not sure why Reveal makes these inline-block */
+                display: block;
+            }
+
+            .credits p {
+                font-size: 0.8em;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section>
+                    <h1>Refactoring with Regexes</h1>
+                </section>
+
+                <section>
+                    <h3>Theoretical Definition</h3>
+                    <p>Let Σ be an alphabet. The reg. exp. over Σ and the sets that they denote are defined recursively as follows.</p>
+                    <ol>
+                        <li>∅ is a reg. exp. and denotes the empty set.</li>
+                        <li><i>ε</i> is a reg. exp. and denotes the set {<i>ε</i>}.</li>
+                        <li>For each <i>a</i> in Σ, <b>a</b> is a reg. exp. and denotes the set {<i>a</i>}.</li>
+                        <li>If <i>r</i> and <i>s</i> are reg. exp. denoting the languages <i>R</i> and <i>S</i>, respectively, then <i>(r+s)</i>, <i>(rs)</i>, and <i>(r*)</i> are reg. exp. that denote the sets R∪S, RS, and R*, respectively.</li>
+                    </ol>
+                </section>
+
+                <section>
+                    <h3>Practical Definition</h3>
+                    <p>A domain-specific language (DSL) for searching for text</p>
+                    <p>or</p>
+                    <p>Search strings with extra features</p>
+                </section>
+
+                <section>
+                    <h2>Basic Regexes</h2>
+                </section>
+
+                <section>
+                    <h3>Basic Regexes</h3>
+                    <dl class="horizontal">
+                        <dt>?</dt><dd>Match 0 or 1 of the preceding element</dd>
+                        <dt>+</dt><dd>Match 1 or more of the preceding element</dd>
+                        <dt>*</dt><dd>Match 0 or more of the preceding element</dd>
+                        <dt>{<i>m</i>,<i>n</i>}</dt><dd>Match between <i>m</i> and <i>n</i> of the preceding element</dd>
+                    </dl>
+                </section>
+
+                <section>
+                    <h3>Basic Regexes</h3>
+                    <dl class="horizontal">
+                        <dt>[abc]</dt>
+                        <dd>Match characters a, b, c</dd>
+
+                        <dt>[a-z]</dt>
+                        <dd>Match any character a-z</dd>
+
+                        <dt class="fragment" data-fragment-index=1>[^a-z]</dt>
+                        <dd class="fragment" data-fragment-index=1>Match any character <em>except</em> a-z</dd>
+
+                        <dt class="fragment" data-fragment-index=2><i>x</i>|<i>y</i></dt>
+                        <dd class="fragment" data-fragment-index=2>Match <i>x</i> or <i>y</i></dd>
+
+                        <dt class="fragment" data-fragment-index=3>(<i>xyz</i>)</dt>
+                        <dd class="fragment" data-fragment-index=3>Group+capture (treat <i>xyz</i> as a single element)</dd>
+
+                        <dt class="fragment" data-fragment-index=4>\1, \2</dt>
+                        <dd class="fragment" data-fragment-index=4>Match the 1st, 2nd, etc. capture group</dd>
+
+                        <dt class="fragment" data-fragment-index=5>$1, $2</dt>
+                        <dd class="fragment" data-fragment-index=5>Match the 1st, 2nd, etc. capture group in replace strings (check the docs)</dd>
+                    </dl>
+                </section>
+
+                <section>
+                    <h3>Basic Regexes</h3>
+                    <dl class="horizontal">
+                        <dt>^</dt><dd>Match the beginning of the string or line</dd>
+                        <dt>$</dt><dd>Match the end of the string or line</dd>
+                        <dt>\b</dt><dd>Match a word boundary</dd>
+                    </dl>
+                </section>
+
+                <section>
+                    <h3>Basic Regexes</h3>
+                    <dl class="horizontal">
+                        <dt>.</dt><dd>Match any character (except a newline)</dd>
+                        <dt>\d</dt><dd>Match any digit</dd>
+                        <dt>\D</dt><dd>Match any non-digit</dd>
+                        <dt>\w</dt><dd>Match any alphanumeric (or <code>_</code>)</dd>
+                        <dt>\W</dt><dd>Match any non-alphanumeric</dd>
+                        <dt>\s</dt><dd>Match any whitespace (including newline)</dd>
+                        <dt>\S</dt><dd>Match any non-whitespace</dd>
+                    </dl>
+                    <p>Check docs for more.</p>
+                </section>
+
+                <section>
+                    <h3>Modifiers</h3>
+                    <dl class="horizontal">
+                        <dt>i</dt><dd>Case insensitive</dd>
+                        <dt>g</dt><dd>Global (instead of stopping at the first match)</dd>
+                        <dt>m</dt><dd>Multiline matching</dd>
+                        <dt>s</dt><dd>&ldquo;Single-line matching&rdquo; (&ldquo;dotall&rdquo;)</dd>
+                    </dl>
+                    <p>Check docs for more.</p>
+                </section>
+
+                <section>
+                    <h2>Examples</h2>
+                </section>
+
+                <section>
+                    <h3>A Simple Example</h3>
+                    <p>Hello, world!</p>
+                    <p>Hi, everyone!</p>
+                    <p>Goodbye,boys and girls.</p>
+                    <div class="fragment-holder">
+                        <pre class="fragment"><code class="markdown">/Hello|Hi|Goodbye/</code></pre>
+                        <pre class="fragment"><code class="markdown">/\b(Hello|Hi|Goodbye),/</code></pre>
+                        <pre class="fragment"><code class="markdown">/\b(Hello|Hi|Goodbye),\s*/</code></pre>
+                        <pre class="fragment"><code class="markdown">/\b(Hello|Hi|Goodbye),\s*([^!.]*)/</code></pre>
+                        <pre class="fragment"><code class="markdown">/\b(Hello|Hi|Goodbye),\s*([^!.]*)[!.]/</code></pre>
+                        <pre class="fragment"><code class="markdown">/\b(Hello|Hi|Goodbye),\s*([^!.]*)[!.]/i</code></pre>
+                    </div>
+                </section>
+
+                <section>
+                    <h2>A Simple Example</h2>
+                    <pre><code>let match = greeting.search(
+    /\b(Hello|Hi|Goodbye),\s*([^!.]*?)[!.]/i);
+if (match) {
+    window.alert('Greeting was "' + match[1]
+        + '", name was "' + match[2] + '".');
+}</code></pre>
+                </section>
+
+                <section>
+                    <h3>Finite State Machines</h3>
+                    <a class="fragment" href="https://research.ncl.ac.uk/game/mastersdegree/gametechnologies/artificialintelligence1finitestatemachines/2016%20Tutorial%208%20-%20Finite%20State%20Machines.pdf"><img data-src="img/pacman-fsm.svg"></a>
+                </section>
+
+                <section>
+                    <h3>Regexes as Finite State Machines</h3>
+                    <pre><code class="markdown">/\b(Hello|Hi|Goodbye),\s*(.*?)[!.]</code></pre>
+                    <a href="https://regexper.com/#%5Cb%28Hello%7CHi%7CGoodbye%29%2C%5Cs*%28.*%3F%29%5B!.%5D"><img data-src="img/greetings.svg"></a>
+                </section>
+
+                <section>
+                    <img data-src="img/zawinski.jpg" class="stretch float-left">
+                    &ldquo;Some people, when confronted with a problem, think &lsquo;I know, I'll use regular expressions.&rsquo; Now they have two problems.&rdquo; &mdash;Jamie Zawinski
+                </section>
+
+                <section>
+                    <img data-src="img/regex-works.gif" class="stretch">
+                    &ldquo;When my regex returned exactly what I expected&rdquo;
+                    &mdash;<a href="http://www.codingbyte.com/a-developers-life-in-gif/">A Developer's Life in Gif</a>
+                </section>
+
+                <section>
+                    <h3>RFC 822 Compliant Email Validation</h3>
+                    <pre><code>(?:(?:\r\n)?[ \t])*(?:(?:(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t]
+)+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:
+\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(
+?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[
+\t]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\0
+31]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\
+](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+
+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:
+(?:\r\n)?[ \t])*))*|(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z
+|(?=[\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)
+?[ \t])*)*\<(?:(?:\r\n)?[ \t])*(?:@(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\
+r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[
+ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)
+?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t]
+)*))*(?:,@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[
+ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*
+)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t]
+)+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*))*)
+*:(?:(?:\r\n)?[ \t])*)?(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+
+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r
+\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:
+\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t
+]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031
+]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](
+?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?
+:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?
+:\r\n)?[ \t])*))*\>(?:(?:\r\n)?[ \t])*)|(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?
+:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?
+[ \t]))*"(?:(?:\r\n)?[ \t])*)*:(?:(?:\r\n)?[ \t])*(?:(?:(?:[^()<>@,;:\\".\[\]
+\000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|
+\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>
+@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"
+(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t]
+)*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\
+".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?
+:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[
+\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*))*|(?:[^()<>@,;:\\".\[\] \000-
+\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\.|(
+?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)*\<(?:(?:\r\n)?[ \t])*(?:@(?:[^()<>@,;
+:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([
+^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\"
+.\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\
+]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*))*(?:,@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\
+[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\
+r\\]|\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\]
+\000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]
+|\\.)*\](?:(?:\r\n)?[ \t])*))*)*:(?:(?:\r\n)?[ \t])*)?(?:[^()<>@,;:\\".\[\] \0
+00-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\
+.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,
+;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|"(?
+:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*))*@(?:(?:\r\n)?[ \t])*
+(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".
+\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t])*(?:[
+^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\]
+]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*))*\>(?:(?:\r\n)?[ \t])*)(?:,\s*(
+?:(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\
+".\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(
+?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[
+\["()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t
+])*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t
+])+|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*)(?
+:\.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|
+\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*))*|(?:
+[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".\[\
+]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)*\<(?:(?:\r\n)
+?[ \t])*(?:@(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["
+()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)
+?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>
+@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*))*(?:,@(?:(?:\r\n)?[
+ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,
+;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*)(?:\.(?:(?:\r\n)?[ \t]
+)*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\
+".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*))*)*:(?:(?:\r\n)?[ \t])*)?
+(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\["()<>@,;:\\".
+\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])*)(?:\.(?:(?:
+\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z|(?=[\[
+"()<>@,;:\\".\[\]]))|"(?:[^\"\r\\]|\\.|(?:(?:\r\n)?[ \t]))*"(?:(?:\r\n)?[ \t])
+*))*@(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])
++|\Z|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*)(?:\
+.(?:(?:\r\n)?[ \t])*(?:[^()<>@,;:\\".\[\] \000-\031]+(?:(?:(?:\r\n)?[ \t])+|\Z
+|(?=[\["()<>@,;:\\".\[\]]))|\[([^\[\]\r\\]|\\.)*\](?:(?:\r\n)?[ \t])*))*\>(?:(
+?:\r\n)?[ \t])*))*)?;\s*)
+</code></pre>
+                    <p>&mdash;<a href="http://www.ex-parrot.com/~pdw/Mail-RFC822-Address.html">Mail::RFC822::Address</a></p>
+                    <aside class="notes">The author did not generate this by hand. RFC 822 is obsolete. RFC 5322 is simpler.  And you don't actually have to fully validate email; you just have to do good enough to stop common mistakes.</aside>
+                </section>
+
+                <section>
+                    <h3>Simple Email Validation</h3>
+                    <div class="fragment-holder" data-code-stepper="simple-email" style="height: 2em">
+                        <pre><code class="markdown" data-noescape>[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}</code></pre>
+                    </div>
+                    <a class="fragment" href="https://regexper.com/#%5BA-Za-z0-9._%25%2B-%5D%2B%40%5BA-Za-z0-9.-%5D%2B%5C.%5BA-Za-z%5D%7B2%2C%7D"><img data-src="img/simple-email.svg"></a>
+                    <p>&mdash;<a href="https://www.regular-expressions.info/email.html">regular-expressions.info</a></p>
+                </section>
+
+                <section>
+                    <h3>Simple Email Validation</h3>
+                    <pre><code class="python" data-noescape>re.compile(r"""
+    [A-Za-z0-9._%+-]+   # Username
+    @
+    [A-Za-z0-9.-]+      # Domain components
+    \.
+    [A-Za-z]{2,}        # Top-level domain
+    """, re.X)</code></pre>
+                </section>
+
+                <section>
+                    <h2>Advanced Regexes</h2>
+                </section>
+
+                <section>
+                    <h3>Advanced Regexes</h3>
+                    <dl class="horizontal wide">
+                        <dt class="fragment" data-fragment-index=1>+?</dt>
+                        <dd class="fragment" data-fragment-index=1>Match 1 or more (non-greedy)</dd>
+
+                        <dt class="fragment" data-fragment-index=1>*?</dt>
+                        <dd class="fragment" data-fragment-index=1>Match 0 or more (non-greedy)</dd>
+
+                        <dt class="fragment" data-fragment-index=2>(?:<i>xyz</i>)</dt>
+                        <dd class="fragment" data-fragment-index=2>Grouping (but not capture)</dd>
+
+                        <dt class="fragment" data-fragment-index=3>(?ism)</dt>
+                        <dd class="fragment" data-fragment-index=3>Turn on modifiers i, s, m</dd>
+
+                        <dt class="fragment" data-fragment-index=3>(?^ism)</dt>
+                        <dd class="fragment" data-fragment-index=3>Turn off modifiers i, s, m</dd>
+                    </dl>
+                </section>
+
+                <section>
+                    <h3>Advanced Regexes</h3>
+                    <dl class="horizontal wide">
+                        <dt class="fragment" data-fragment-index=4>(?=<i>xyz</i>)</dt>
+                        <dd class="fragment" data-fragment-index=4>Zero-width positive look-ahead assertion</dd>
+
+                        <dt class="fragment" data-fragment-index=5>(?!<i>xyz</i>)</dt>
+                        <dd class="fragment" data-fragment-index=5>Zero-width negative look-ahead assertion</dd>
+
+                        <dt class="fragment" data-fragment-index=6>(?&lt;=<i>xyz</i>)</dt>
+                        <dd class="fragment" data-fragment-index=6>Zero-width positive look-behind assertion</dd>
+
+                        <dt class="fragment" data-fragment-index=7>(?&lt;!<i>xyz</i>)</dt>
+                        <dd class="fragment" data-fragment-index=7>Zero-width negative look-behind assertion</dd>
+                    </dl>
+                </section>
+
+                <section>
+                    <h3>Advanced Regexes</h3>
+                    <ul>
+                        <li>Extended (verbose) mode</li>
+                        <li>Named capture groups</li>
+                    </ul>
+                    <p>Check docs for more.</p>
+                </section>
+
+                <section>
+                    <h3>From a Popular Commercial Library</h3>
+
+                    <div class="fragment-holder" data-code-stepper="format-number" style="height: 8em">
+                        <pre><code data-trim data-noescape>
+                            function formatNumber(params) {
+                                var number = params.value;
+                                // this puts commas into the number eg 1000 goes to 1,000,
+                                // i pulled this from stack overflow,
+                                // i have no idea how it works
+                                return Math.floor(number)
+                                    .toString()
+                                    .replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+                            }
+                        </code></pre>
+                    </div>
+
+                    <div class="fragment-holder">
+                        <dl class="horizontal fragment current-visible" data-fragment-index=0>
+                            <dt>\d</dt><dd>Match any digit</dd>
+                            <dt>()</dt><dd>Capture it for later</dd>
+                        </dl>
+                        <dl class="horizontal fragment current-visible" data-fragment-index=1>
+                            <dt>\d</dt><dd>Match any digit</dd>
+                            <dt>{3}</dt><dd>Match 3 of the preceding element</dd>
+                        </dl>
+                        <dl class="horizontal fragment current-visible" data-fragment-index=2>
+                            <dt>()</dt><dd>Group+capture</dd>
+                            <dt>(?:)</dt><dd>Group without capture</dd>
+                        </dl>
+                        <dl class="horizontal fragment current-visible" data-fragment-index=3>
+                            <dt>+</dt><dd>Match 1 or more of the preceding element</dd>
+                        </dl>
+                        <dl class="horizontal fragment current-visible" data-fragment-index=4>
+                            <dt>\d</dt><dd>Match any digit</dd>
+                            <dt>(?!)</dt><dd>Zero-width negative look-ahead assertion</dd>
+                        </dl>
+                        <dl class="horizontal fragment current-visible" data-fragment-index=5>
+                            <dt>(?=)</dt><dd>Zero-width look-ahead assertion</dd>
+                        </dl>
+                        <dl class="horizontal fragment current-visible" data-fragment-index=7>
+                            <dt>$1</dt><dd>Substitute the first capture group</dd>
+                        </dl>
+                        <dl class="horizontal fragment current-visible" data-fragment-index=8>
+                            <dt>g</dt><dd>Global</dd>
+                        </dl>
+                    </div>
+                </section>
+
+                <section data-background-iframe="iframe/pr1.htm">
+                </section>
+                <section data-background-iframe="iframe/pr2.htm">
+                </section>
+
+                <section>
+                    <h2>Refactoring with Regexes</h2>
+                </section>
+
+                <section>
+                    <h3>Issue</h3>
+                    <p>Pre-VCS dates make code ugly.</p>
+                    <pre><code>DebVersion::DebVersion(const char *version)
+{
+  const char *epoch_end = strchr(version, ':');  // 5-17-2009
+  if (epoch_end != NULL)  // 5-17-2009
+  {                         // 5-17-2009
+    mEpoch = atoi(version);  // 5-17-2009
+  }                          // 5-17-2009
+  else                       // 5-17-2009
+  {                          // 5-17-2009
+    mEpoch = 0;            // 5-17-2009
+  }
+
+  const char *upstream_start;
+  if (epoch_end) {
+    upstream_start = epoch_end + 1;
+  } else {
+    upstream_start = version;
+  }
+
+  const char *upstream_end = strrchr(upstream_start, '-');
+  size_t upstream_size;
+  if (upstream_end == NULL) {
+    upstream_size = strlen(upstream_start);
+  } else {
+    upstream_size = upstream_end - upstream_start;
+  }
+
+  mUpstream = (char*) malloc(upstream_size + 1);
+  strncpy(mUpstream, upstream_start, upstream_size);
+  mUpstream[upstream_size] = '\0';
+
+  if (upstream_end == NULL) {
+    mRevision = strdup("0");
+  } else {
+    mRevision = strdup(upstream_end + 1);
+  }
+}</code></pre>
+                </section>
+
+                <section>
+                    <h4>Strip trailing dates</h4>
+                    <ul>
+                        <li>Search: <pre><code class="markdown">\s*//\s*\d+[-/]\d+[-/]\d+</code></pre></li>
+                        <li>Replace: <i>nothing</i></li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h4>Clean up braces</h4>
+                    <ul>
+                        <li>Search: <pre><code class="markdown">^( +(if|else).*)\r?\n\s+\{</code></pre></li>
+                        <li>Replace: <pre><code class="markdown">$1 {</code></pre></li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h4>Clean up braces (better)</h4>
+                    <ul>
+                        <li>Search: <pre><code class="markdown" data-noescape>^( +(if|else)<mark>(?!.*//)</mark>.*)\r?\n\s+\{</code></pre></li>
+                        <li>Replace: <pre><code class="markdown">$1 {</code></pre></li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Limitations of Regexes</h3>
+                    <a href="https://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-self-contained-tags/1732454#1732454">RegEx match open tags except XHTML self-contained tags</a>, Stack Overflow
+                </section>
+
+                <section data-background-image="img/parse-html.png" data-background-position="top">
+                </section>
+
+                <section data-background-image="img/parse-html.png" data-background-position="bottom">
+                </section>
+
+                <section>
+                    <h3>Worse is Better</h3>
+                    <p>The &ldquo;right&rdquo; way to process code:</p>
+                    <ul>
+                        <li class="fragment">XML DOM</li>
+                        <li class="fragment">XSLT</li>
+                        <li class="fragment">ReSharper</li>
+                        <li class="fragment">Reflection</li>
+                        <li class="fragment">Roslyn</li>
+                        <li class="fragment">js-codemod</li>
+                        <li class="fragment">Prettier</li>
+                        <li class="fragment">clang-format</li>
+                        <li class="fragment">LibTooling</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Worse is Better</h3>
+                    <p>The &ldquo;worse is better&rdquo; way to process code:</p>
+                    <ul>
+                        <li class="fragment">Regexes</li>
+                    </ul>
+                    <aside class="notes">"Worse is Better" comes from an essay by Richard P. Gabriel, where he argues that software that's simple and mostly works may be preferable than software that's 100% correct and complete.</aside>
+                </section>
+
+                <section>
+                    <h3>Worse is Better</h3>
+                    <img data-src="img/michael-browning-14090-unsplash.jpg">
+                </section>
+
+                <section>
+                    <h3>Worse is Better</h3>
+                    <img data-src="img/microwave.jpg">
+                </section>
+
+                <section>
+                    <h3>Worse is Better</h3>
+                    <a href="https://github.com/facebook/codemod">https://github.com/facebook/codemod</a>
+                    <p>&ldquo;Codemod is a tool/library to assist you with large-scale codebase refactors that can be partially automated but still require human oversight and occasional intervention. Codemod was developed at Facebook and released as open source.&rdquo;</p>
+                    <pre><code>codemod -m -d /home/jrosenstein/www --extensions php,html \
+    '<font *color="?(.*?)"?>(.*?)</font>' \
+    '<span style="color: \1;">\2</span>'</code></pre>
+                </section>
+
+                <section>
+                    <h2>What's the point?</h2>
+                </section>
+
+                <section>
+                    <h3>Regexes are Awesome</h3>
+                    <img data-src="img/frame_046_delay-0.01s.gif">
+                </section>
+
+                <section>
+                    <h3>Code is Text</h3>
+                    <img data-src="img/microwave.jpg">
+                </section>
+
+                <section>
+                    <h3>Getting Philosophical</h3>
+                    <a href="https://en.wikipedia.org/wiki/Larry_Wall"><img data-src="img/Larry_Wall_YAPC_2007.jpg"></a>
+                </section>
+
+                <section>
+                    <h3>The Three Chief Virtues of a Programmer</h3>
+                    <img data-src="img/Programming_Perl_4th_Ed_cover.jpg" class="float-left" width=375 height=492>
+                    <ul>
+                        <li class="fragment">Laziness</li>
+                        <li class="fragment">Impatience</li>
+                        <li class="fragment">Hubris</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Laziness</h2>
+                    <img data-src="img/Programming_Perl_4th_Ed_cover.jpg" class="float-left" width=375 height=492>
+                    <p>The quality that makes you go to great effort to reduce overall energy expenditure. It makes you write labor-saving programs that other people will find useful, and document what you wrote so you don't have to answer so many questions about it.</p>
+                    <aside class="notes">Hence, the first great virtue of a programmer.</aside>
+                </section>
+
+                <section>
+                    <h2>Impatience</h2>
+                    <img data-src="img/Programming_Perl_4th_Ed_cover.jpg" class="float-left" width=375 height=492>
+                    <p>The anger you feel when the computer is being lazy. This makes you write programs that don't just react to your needs, but actually anticipate them. Or at least pretend to.</p>
+                    <aside class="notes">Hence, the second great virtue of a programmer.</aside>
+                </section>
+
+                <section>
+                    <h2>Hubris</h2>
+                    <img data-src="img/Programming_Perl_4th_Ed_cover.jpg" class="float-left" width=375 height=492>
+                    <p>Excessive pride, the sort of thing Zeus zaps you for. Also the quality that makes you write (and maintain) programs that other people won't want to say bad things about.</p>
+                    <aside class="notes">Hence, the third great virtue of a programmer.</aside>
+                </section>
+
+                <section>
+                    <h2>False Laziness</h2>
+                    <img data-src="img/Programming_Perl_4th_Ed_cover.jpg" class="float-left" width=375 height=492>
+                    <p>The evil twin of the virtue of laziness</p>
+                    <aside class="notes">I was going to put Ash, from Army of Darkness, or Evil Spock from Mirror, Mirror here.</aside>
+                </section>
+
+                <section>
+                    <h2>False Laziness</h2>
+                    <ul>
+                        <li class="fragment">Copy and paste programming</li>
+                        <li class="fragment">Skip the tutorial or example exercises to save time, then spend longer on the project</li>
+                        <li class="fragment">Do some process manually because I don't want to have to figure out or remember how the tool works</li>
+                        <li class="fragment">Delete my Git repo and re-clone it instead of properly understanding Git</li>
+                        <li class="fragment">Get halfway through a set of code changes to realize I should have automated them</li>
+                        <li class="fragment">Use regexes for everything instead of learning refactoring tools</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>False Laziness</h2>
+                    <p>Repetitive work can be satisfying.</p>
+                    <ul>
+                        <li>You get in a routine.</li>
+                        <li>You don't have to think too hard.</li>
+                        <li>You feel like you're accomplishing something.</li>
+                    </ul>
+                    <p>But it's often not the best way of getting something done.</p>
+                    <p>And you can make mistakes.</p>
+                </section>
+
+                <section class="credits">
+                    <h2>Credits</h2>
+
+                    <p>Theoretical definition from <a href="https://en.wikipedia.org/wiki/Introduction_to_Automata_Theory,_Languages,_and_Computation"><i>Introduction to Automata Theory, Languages, and Computation</i>, Hopcroft and Ullman</a.</p>
+
+                    <p>Jamie Zawinski photo from <a href="https://upclosed.com/people/jamie-zawinski/">UpClosed</a>
+
+                    <p>Larry Wall photo by <a rel="nofollow" class="external text" href="https://www.flickr.com/people/15352839@N00">Randal Schwartz</a> from Portland, OR, USA - <a rel="nofollow" class="external text" href="https://www.flickr.com/photos/15352839@N00/618129424/">Flickr</a>, <a href="https://creativecommons.org/licenses/by-sa/2.0" title="Creative Commons Attribution-Share Alike 2.0">CC BY-SA 2.0</a>, <a href="https://commons.wikimedia.org/w/index.php?curid=2938351">Link</a></p>
+
+                    <p><i>Programming Perl</i> is Copyright &copy; O'Reilly.</p>
+
+                    <p>&ldquo;Laziness, impatience, and hubris&rdquo; quotes are from <i>Programming Perl</i>, Wall, Christiansen, and Schwartz, as quoted on <a href="http://wiki.c2.com/?LazinessImpatienceHubris">C2</a>.</p>
+
+                    <p>Commercial kitchen by <a href="https://unsplash.com/photos/MtqG1lWcUw0">Michael Browning on Unsplash</a></p>
+
+                    <p>Microwave photography by <a href="https://www.flickr.com/photos/xurxosanz/6758586173/in/photolist-biewcP-9C2yBp-87e6Zs-8g2RCx-bUYtML-bfvErT-bB9CCe-2ML1pM-7TWCHa-aQUnx-bD3La6-8oeg8B-biBxBt-5m6CxV-nLxKK-37Rosj-a81KGD-bWZD71-DFysdq-Wcgpy-syC7F4-8oefWz-rBQZY2-6opKb8-UBBafU-bqtSbq-X55LxR-ENDRAX-5QDWdZ-7Nbg2x-Fhq7u-iVbw3-aQVca-9ufGxo-hhyV-jeZSxJ-4Y8sVJ-66mLt7-iGnkis-7zRZQb-6CrsXR-kN1jK-iJxUS-DN5XL-Tn3Xs-dpDBvT-Mtq3-5TWzwm-5UNyE1-5KXZCq">Jorge Sanz</a></p>
+                </section>
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/code-stepper.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            configureCodeStepper('simple-email', [
+                '[A-Za-z0-9._%+-]+',
+                '@',
+                '[A-Za-z0-9.-]+',
+                '\\.',
+                '[A-Za-z]{2,}',
+            ]);
+            configureCodeStepper('format-number', [
+                '(\\d)',
+                '\\d{3}',
+                '(\\d{3})',
+                '(\\d{3})+',
+                '(?!\\d)',
+                '(?=(\\d{3})+(?!\\d))',
+                '(\\d)(?=(\\d{3})+(?!\\d))',
+                '"$1,"',
+                '/g',
+            ]);
+
+            // More info about config & dependencies:
+            // - https://github.com/hakimel/reveal.js#configuration
+            // - https://github.com/hakimel/reveal.js#dependencies
+            Reveal.initialize({
+                history: true,
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ]
+            });
+        </script>
+    </body>
+</html>
